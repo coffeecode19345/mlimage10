@@ -32,26 +32,38 @@ pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.5)
 # Initialize CLIP for content moderation
 @st.cache_resource
 def load_clip_model():
-    model, preprocess = openai_clip.load("ViT-B/32", device="cuda" if torch.cuda.is_available() else "cpu")
-    return model, preprocess
+    try:
+        model, preprocess = openai_clip.load("ViT-B/32", device="cuda" if torch.cuda.is_available() else "cpu")
+        return model, preprocess
+    except Exception as e:
+        logger.error(f"Error loading CLIP model: {str(e)}")
+        raise
 
 # Initialize Stable Diffusion Inpainting
 @st.cache_resource
 def load_inpainting_model():
-    pipe = StableDiffusionInpaintPipeline.from_pretrained(
-        "runwayml/stable-diffusion-inpainting",
-        torch_dtype=torch.float16,
-        use_auth_token=False
-    )
-    pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
-    return pipe
+    try:
+        pipe = StableDiffusionInpaintPipeline.from_pretrained(
+            "runwayml/stable-diffusion-inpainting",
+            torch_dtype=torch.float16,
+            use_auth_token=False
+        )
+        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
+        return pipe
+    except Exception as e:
+        logger.error(f"Error loading inpainting model: {str(e)}")
+        raise
 
 # Initialize InsightFace for face swapping and expression modification
 @st.cache_resource
 def load_insightface_model():
-    app = FaceAnalysis(name="buffalo_l")
-    app.prepare(ctx_id=0, det_size=(640, 640))
-    return app
+    try:
+        app = FaceAnalysis(name="buffalo_l")
+        app.prepare(ctx_id=0, det_size=(640, 640))
+        return app
+    except Exception as e:
+        logger.error(f"Error loading InsightFace model: {str(e)}")
+        raise
 
 # Content moderation with CLIP
 def moderate_content(image):
@@ -115,8 +127,7 @@ def face_swap_or_expression(image, source_image=None, expression=None):
         
         if len(faces_target) > 0:
             if expression:
-                # Placeholder for expression modification (requires custom model)
-                # For now, use inpainting to simulate expression
+                # Placeholder for expression modification via inpainting
                 pipe = load_inpainting_model()
                 face = faces_target[0]
                 bbox = face.bbox
@@ -268,7 +279,7 @@ def main():
                 return
 
             # Display original image
-            st.image(image, caption="Original Image", use_column_width=True)
+            st.image(image, caption="Original Image", use_container_width=True)
 
             # Manipulation options
             manipulation_type = st.selectbox(
@@ -438,7 +449,7 @@ def main():
                         processed_image = st.session_state.history[st.session_state.current_index]
 
                 # Display processed image
-                st.image(processed_image, caption=f"{manipulation_type} Result", use_column_width=True)
+                st.image(processed_image, caption=f"{manipulation_type} Result", use_container_width=True)
 
                 # Download processed image with metadata
                 buffered = io.BytesIO()
@@ -455,7 +466,7 @@ def main():
                     annotation_data = {
                         "image_metadata": metadata,
                         "annotations": annotations,
-                        "timestamp": "2025-08-04 08:08:00 CEST"
+                        "timestamp": "2025-08-04 08:11:00 CEST"
                     }
                     annotation_buffer = io.BytesIO(json.dumps(annotation_data, indent=2).encode('utf-8'))
                     st.download_button(
