@@ -2,3 +2,4 @@ streamlit
 rawpy
 opencv-python
 torch
+rembg
