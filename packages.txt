@@ -1,1 +1,2 @@
 libraw-dev
+libopencv-dev python3-opencv
