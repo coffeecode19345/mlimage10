@@ -7,3 +7,9 @@ torchvision
 requests
 rembg
 onnxruntime
+streamlit-drawable-canvas
+diffusers
+clip
+insightface
+exifread
+
